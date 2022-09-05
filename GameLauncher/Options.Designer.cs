@@ -122,7 +122,7 @@
             // 
             this.panel3.Controls.Add(this.radioButton5);
             this.panel3.Controls.Add(this.radioButton6);
-            this.panel3.Location = new System.Drawing.Point(63, 67);
+            this.panel3.Location = new System.Drawing.Point(62, 67);
             this.panel3.Name = "panel3";
             this.panel3.Size = new System.Drawing.Size(106, 23);
             this.panel3.TabIndex = 16;
@@ -153,7 +153,7 @@
             // 
             this.panel2.Controls.Add(this.radioButton3);
             this.panel2.Controls.Add(this.radioButton4);
-            this.panel2.Location = new System.Drawing.Point(63, 41);
+            this.panel2.Location = new System.Drawing.Point(62, 41);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(106, 23);
             this.panel2.TabIndex = 16;
@@ -184,7 +184,7 @@
             // 
             this.panel1.Controls.Add(this.radioButton1);
             this.panel1.Controls.Add(this.radioButton2);
-            this.panel1.Location = new System.Drawing.Point(63, 15);
+            this.panel1.Location = new System.Drawing.Point(62, 15);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(106, 23);
             this.panel1.TabIndex = 15;

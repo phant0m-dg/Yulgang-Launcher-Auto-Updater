@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 
 namespace GameLauncher
@@ -12,13 +7,6 @@ namespace GameLauncher
 
     public partial class Options : Form
     {
-        public Options()
-        {
-            InitializeComponent();
-            comboBox1.SelectedIndex = 0;
-        }
-        public frmLauncher launcherFormRef;
-
         private readonly int offsetResolution = 0x0E; // Values: 00 800x600, 01 1024x768, 02 1280x1024
         private readonly int offsetViewRange = 0x06; // Values: 00 Far, 01 Medium, 02 Close
         private readonly int offsetDetails = 0x04; // Values: 01 Low, 00 High
@@ -36,7 +24,63 @@ namespace GameLauncher
         private byte shadowValue = 0x00;
         private byte windowModeValue = 0x00;
 
+        public Options()
+        {
+            InitializeComponent();
+            if (CheckFileExists())
+            {
 
+                byte[] test = { 0x00 };
+                using (BinaryReader reader = new BinaryReader(new FileStream(configFile, FileMode.Open)))
+                {
+                    reader.BaseStream.Seek(offsetResolution, SeekOrigin.Begin);
+                    reader.BaseStream.Read(test, 0, 1);
+                    if (test[0].Equals(0x02)) { comboBox1.SelectedIndex = 2; }
+                    if (test[0].Equals(0x01)) { comboBox1.SelectedIndex = 1; }
+                    if (test[0].Equals(0x00)) { comboBox1.SelectedIndex = 0; }
+
+                    reader.BaseStream.Seek(offsetViewRange, SeekOrigin.Begin);
+                    reader.BaseStream.Read(test, 0, 1);
+                    if (test[0].Equals(0x02)) { radioButton7.Checked = true; }
+                    if (test[0].Equals(0x01)) { radioButton8.Checked = true; }
+                    if (test[0].Equals(0x00)) { radioButton9.Checked = true; }
+
+                    reader.BaseStream.Seek(offsetDetails, SeekOrigin.Begin);
+                    reader.BaseStream.Read(test, 0, 1);
+                    if (test[0].Equals(0x00)) { radioButton1.Checked = true; }
+                    if (test[0].Equals(0x01)) { radioButton2.Checked = true; }
+
+                    reader.BaseStream.Seek(offsetLights, SeekOrigin.Begin);
+                    reader.BaseStream.Read(test, 0, 1);
+                    if (test[0].Equals(0x00)) { radioButton3.Checked = true; }
+                    if (test[0].Equals(0x01)) { radioButton4.Checked = true; }
+
+                    reader.BaseStream.Seek(offsetShadows, SeekOrigin.Begin);
+                    reader.BaseStream.Read(test, 0, 1);
+                    if (test[0].Equals(0x00)) { radioButton5.Checked = true; }
+                    if (test[0].Equals(0x01)) { radioButton6.Checked = true; }
+
+                    reader.BaseStream.Seek(offsetWindowMode, SeekOrigin.Begin);
+                    reader.BaseStream.Read(test, 0, 1);
+                    if (test[0].Equals(0x00)) { checkBox1.Checked = false; }
+                    if (test[0].Equals(0x01)) { checkBox1.Checked = true; }
+                }
+            }
+            else
+            {
+                comboBox1.SelectedIndex = 0;
+            }
+        }
+        public frmLauncher launcherFormRef;
+
+        private bool CheckFileExists()
+        {
+            if (!File.Exists(configFile))
+            {
+                return false;
+            }
+            return true;
+        }
 
         private void PatchFile(string originalFile)
         {
@@ -85,7 +129,7 @@ namespace GameLauncher
         {
             try
             {
-                if (!File.Exists(configFile))
+                if (!CheckFileExists())
                 {
                     FileStream fs = File.Create(configFile);
                     fs.Write(YBopt, 0, YBopt.Length);
