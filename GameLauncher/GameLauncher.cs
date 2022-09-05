@@ -23,6 +23,7 @@ namespace GameLauncher
 
         private Patcher oPatcher;
 
+        #region Game Launcher Load
         private void GameLauncher_Load(object sender, EventArgs e)
         {
             DrawControlBackground(this.btnClose, false);
@@ -41,28 +42,31 @@ namespace GameLauncher
             m_BtnOptOn = this.btnOptions.BackgroundImage;
 
             this.oPatcher = new Patcher(this);
-        }
+        } 
+        #endregion
 
+        #region Close Button Functions
         private void picBoxClose_MouseEnter(object sender, EventArgs e)
-		{
-			this.btnClose.Image = m_closeBtnOn;
-			this.btnClose.BackgroundImage = m_closeBtnOff;
+        {
+            this.btnClose.Image = m_closeBtnOn;
+            this.btnClose.BackgroundImage = m_closeBtnOff;
             this.btnClose.Cursor = Cursors.Hand;
         }
 
-		private void picBoxClose_MouseLeave(object sender, EventArgs e)
-		{
-			this.btnClose.BackgroundImage = m_closeBtnOn;
-			this.btnClose.Image = m_closeBtnOff;
+        private void picBoxClose_MouseLeave(object sender, EventArgs e)
+        {
+            this.btnClose.BackgroundImage = m_closeBtnOn;
+            this.btnClose.Image = m_closeBtnOff;
             this.btnClose.Cursor = Cursors.Default;
         }
 
-        
         private void btnClose_Click(object sender, EventArgs e)
         {
             Application.Exit();
-        }
+        } 
+        #endregion
 
+        #region Start Game Button Functions
         private void btnStartGame_MouseEnter(object sender, EventArgs e)
         {
             this.btnStartGame.Image = m_BtnGameStartOn;
@@ -97,12 +101,15 @@ namespace GameLauncher
                 // restore the selected directory locally.   
                 Environment.CurrentDirectory = currentDirectory;
                 this.Close();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 this.oPatcher.setStatusText(ex.Message);
             }
-        }
+        } 
+        #endregion
 
+        #region Options Button Functions
         private void btnOptions_MouseEnter(object sender, EventArgs e)
         {
             this.btnOptions.Image = m_BtnOptOn;
@@ -123,13 +130,8 @@ namespace GameLauncher
             {
                 var optForm = new Options();
                 optForm.Show();
-                //optForm.setLauncherFormRef(this);
-
-                //this.Location = new Point(8000, 8000);
-                //this.WindowState = FormWindowState.Minimized;
-                //this.ShowInTaskbar = false;
-                //this.Enabled = false;
             }
-        }
+        } 
+        #endregion
     }
 }
