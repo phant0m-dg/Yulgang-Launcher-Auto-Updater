@@ -85,7 +85,7 @@ namespace GameLauncher
         {
             try
             {
-                //Save environment path
+                // Save environment path
                 string currentDirectory = Environment.CurrentDirectory;
 
                 string execute = string.Concat(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "\\", this.oPatcher.getClientPath());
@@ -98,7 +98,7 @@ namespace GameLauncher
                 startInfo.UseShellExecute = true;
                 Process.Start(startInfo);
 
-                // restore the selected directory locally.   
+                // Restore the selected directory locally.   
                 Environment.CurrentDirectory = currentDirectory;
                 this.Close();
             }
