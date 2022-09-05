@@ -1,0 +1,9 @@
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\bin\Debug\GameLauncher.exe
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\bin\Debug\GameLauncher.pdb
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.frmLauncher.resources
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.Properties.Resources.resources
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.csproj.GenerateResource.cache
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.csproj.CoreCompileInputs.cache
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.exe
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.pdb
+C:\Users\Phant0m\Desktop\GameLauncher-master\GameLauncher\obj\Debug\GameLauncher.Options.resources

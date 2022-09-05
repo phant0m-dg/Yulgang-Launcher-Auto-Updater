@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D2A8DC7E-13E0-45FC-ABA6-A1FFEE1D75B3}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GameLauncher</RootNamespace>
+    <AssemblyName>GameLauncher</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AlphaForm\AlphaForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AlphaForm\LayeredWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ColorProgressBar\ColorProgressBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ColorProgressBar\ColorProgressBarDesigner.cs" />
+    <Compile Include="Options.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Options.Designer.cs">
+      <DependentUpon>Options.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GameLauncher.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GameLauncher.Designer.cs">
+      <DependentUpon>GameLauncher.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Patcher.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Win32.cs" />
+    <Compile Include="Zip\ComHelper.cs" />
+    <Compile Include="Zip\CRC32.cs" />
+    <Compile Include="Zip\Deflate.cs" />
+    <Compile Include="Zip\DeflateStream.cs" />
+    <Compile Include="Zip\EncryptionAlgorithm.cs" />
+    <Compile Include="Zip\Events.cs" />
+    <Compile Include="Zip\Exceptions.cs" />
+    <Compile Include="Zip\ExtractExistingFileAction.cs" />
+    <Compile Include="Zip\FileSelector.cs" />
+    <Compile Include="Zip\GZipStream.cs" />
+    <Compile Include="Zip\Inflate.cs" />
+    <Compile Include="Zip\InfTree.cs" />
+    <Compile Include="Zip\OffsetStream.cs" />
+    <Compile Include="Zip\ParallelDeflateOutputStream.cs" />
+    <Compile Include="Zip\Shared.cs" />
+    <Compile Include="Zip\Tree.cs" />
+    <Compile Include="Zip\WinZipAes.cs" />
+    <Compile Include="Zip\ZipConstants.cs" />
+    <Compile Include="Zip\ZipCrypto.cs" />
+    <Compile Include="Zip\ZipDirEntry.cs" />
+    <Compile Include="Zip\ZipEntry.cs" />
+    <Compile Include="Zip\ZipEntry.Extract.cs" />
+    <Compile Include="Zip\ZipEntry.Read.cs" />
+    <Compile Include="Zip\ZipEntry.Write.cs" />
+    <Compile Include="Zip\ZipEntrySource.cs" />
+    <Compile Include="Zip\ZipErrorAction.cs" />
+    <Compile Include="Zip\ZipFile.AddUpdate.cs" />
+    <Compile Include="Zip\ZipFile.Check.cs" />
+    <Compile Include="Zip\ZipFile.cs" />
+    <Compile Include="Zip\ZipFile.Events.cs" />
+    <Compile Include="Zip\ZipFile.Extract.cs" />
+    <Compile Include="Zip\ZipFile.Read.cs" />
+    <Compile Include="Zip\ZipFile.Save.cs" />
+    <Compile Include="Zip\ZipFile.SaveSelfExtractor.cs" />
+    <Compile Include="Zip\ZipFile.Selector.cs" />
+    <Compile Include="Zip\ZipFile.x-IEnumerable.cs" />
+    <Compile Include="Zip\ZipInputStream.cs" />
+    <Compile Include="Zip\ZipOutputStream.cs" />
+    <Compile Include="Zip\ZipSegmentedStream.cs" />
+    <Compile Include="Zip\Zlib.cs" />
+    <Compile Include="Zip\ZlibBaseStream.cs" />
+    <Compile Include="Zip\ZlibCodec.cs" />
+    <Compile Include="Zip\ZlibConstants.cs" />
+    <Compile Include="Zip\ZlibStream.cs" />
+    <EmbeddedResource Include="GameLauncher.resx">
+      <DependentUpon>GameLauncher.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Options.resx">
+      <DependentUpon>Options.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="app.manifest">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <None Include="Upload\main.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Icon.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
