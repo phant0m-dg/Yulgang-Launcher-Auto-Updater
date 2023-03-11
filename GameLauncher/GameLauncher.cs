@@ -4,8 +4,6 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Collections.Generic;
 
 namespace GameLauncher
 {
@@ -24,11 +22,6 @@ namespace GameLauncher
             foreach (string file in deleteFiles)
             {
                 File.Delete(file);
-            }
-
-            if (!File.Exists("launcher.dat"))
-            {
-                using (FileStream fs = File.Create("launcher.dat"));
             }
 
             InitializeComponent();

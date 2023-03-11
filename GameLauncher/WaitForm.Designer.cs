@@ -38,7 +38,7 @@
             this.BackColor = System.Drawing.Color.Fuchsia;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.ClientSize = new System.Drawing.Size(1280, 500);
+            this.ClientSize = new System.Drawing.Size(800, 400);
             this.ControlBox = false;
             this.DoubleBuffered = true;
             this.Enabled = false;

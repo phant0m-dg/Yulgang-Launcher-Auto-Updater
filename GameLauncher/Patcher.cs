@@ -9,94 +9,128 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Text;
 
 namespace GameLauncher
 {
-    class Patcher
+    public class Patcher
     {
-        private frmLauncher GameLauncher = null;
+        private readonly frmLauncher GameLauncher = null;
         
-        private Settings oSettings = new Settings();
+        private readonly Settings oSettings = new Settings();
+        private readonly Settings oSettingsLauncherUpdate = new Settings();
+        private readonly Uri configURL = new Uri("http://sarasa.com.ar/main.ini");
 
-        private bool force_start = false;
-        private String patch_url;
-
-        private String launcherLocalVerFile;
-        private String launcherLastVer;
-        private String launcherFile;
-
-        private String client_path;
-        private String client_parameters;
-        
-        private String local_patch_list_path;
         private FileStream local_patch_list_stream;
 
-        private Stack<String> patch_list = new Stack<String>();
-        private Stack<String> reversedPatchListStack = new Stack<String>();
-        private String patch;
+        private readonly Stack<string> patch_list = new Stack<string>();
+        private Stack<string> reversedPatchListStack = new Stack<string>();
+
+        private readonly ArrayList local_patch_list = new ArrayList();
+
+        private readonly Stopwatch sw = new Stopwatch();
+
+        private readonly WebClient clientPatches = new WebClient();
+        private readonly WebClient launcherPatches = new WebClient();
+
+        private readonly string localVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        private string patch_url;
+
+        private string launcherLastVer;
+        private string launcherFile;
+
+        private string client_path;
+        private string client_parameters;
+
+        private string currentDownload;
+        private string patch;
+
+        private string local_patch_list_path;
 
         private int patch_count = 0;
-        private ArrayList local_patch_list = new ArrayList();
-
         private int totalPatches = 0;
 
         public Patcher(frmLauncher oGameLauncher)
         {
-            this.GameLauncher = oGameLauncher;
-            this.startDownloadingSettings();
+            GameLauncher = oGameLauncher;
+            startDownloadingSettingsLauncher();
         }
 
         public void startDownloadingSettings()
         {
             WebClient clientPatchlist = new WebClient();
             clientPatchlist.DownloadDataCompleted += new DownloadDataCompletedEventHandler(client_DownloadSettingsCompleted);
-            clientPatchlist.DownloadDataAsync(new Uri("http://sarasa.com.ar/main.ini"));
+            clientPatchlist.DownloadDataAsync(configURL);
         }
 
-        private async void client_DownloadSettingsCompleted(object sender, DownloadDataCompletedEventArgs e)
+        public void startDownloadingSettingsLauncher()
+        {
+            WebClient launcherPatchlist = new WebClient();
+            launcherPatchlist.DownloadDataCompleted += new DownloadDataCompletedEventHandler(launcher_DownloadSettingsCompleted);
+            launcherPatchlist.DownloadDataAsync(configURL);
+        }
+
+        private async void launcher_DownloadSettingsCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
             if (!e.Cancelled && e.Error == null)
             {
-                if (this.loadIniData(System.Text.Encoding.UTF8.GetString(e.Result)) && this.checkPatchlist())
+                if (loadIniDataLauncherUpdate(Encoding.UTF8.GetString(e.Result)))
                 {
-                    string fileContents = File.ReadAllText(launcherLocalVerFile);
-
-                    // Compare the file contents to a string
-                    string comparisonString = launcherLastVer;
-                    bool isEqual = fileContents.Equals(comparisonString);
-
-                    if (!isEqual)
+                    if (launcherLastVer != localVersion)
                     {
-                        FileInfo file = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                        FileInfo file = new FileInfo(Assembly.GetExecutingAssembly().Location);
                         File.Move(file.FullName, file.DirectoryName + "\\" + file.Name.Replace(file.Extension, ".DELETE"));
 
-                        await this.startDownloadingLauncher();
+                        await startDownloadingLauncher();
 
-                        string assemblyPath = Assembly.GetEntryAssembly().Location;
-
-                        // Sleep thread to allow for file unzip
+                        // Wait Splashscreen
                         WaitForm waitForm = new WaitForm();
                         waitForm.Show();
                         waitForm.Update();
-                        Thread.Sleep(5000);
 
-                        Process.Start(assemblyPath);
-                        Environment.Exit(0);
+                        try
+                        {
+                            Thread.Sleep(5000);
+
+                            Application.ExitThread();
+                            Application.Exit();
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.ToString());
+                        }
                     }
-                    
-                    if (this.reversedPatchListStack.Count > 0)
+                    else // If launcher is updated continue to client update
                     {
-                        this.startDownloadingPatches();
-                    }
-                    else
-                    {
-                        this.patchesCompleted("Game is on latest version. You may now start the game.");
+                        startDownloadingSettings();
                     }
                 }
             }
             else
             {
-                this.setStatusText(e.Error.Message);
+                setStatusText(e.Error.Message);
+            }
+        }
+
+        private void client_DownloadSettingsCompleted(object sender, DownloadDataCompletedEventArgs e)
+        {
+            if (!e.Cancelled && e.Error == null)
+            {
+                if (loadIniData(Encoding.UTF8.GetString(e.Result)) && checkPatchlist())
+                {
+                    if (reversedPatchListStack.Count > 0)
+                    {
+                        startDownloadingPatches();
+                    }
+                    else
+                    {
+                        patchesCompleted("Game is on latest version. You may now start the game.");
+                    }
+                }
+            }
+            else
+            {
+                setStatusText(e.Error.Message);
             }
         }
 
@@ -114,26 +148,39 @@ namespace GameLauncher
         {
             try
             {
-                this.oSettings.Load(iniData);
-                this.force_start = this.oSettings.GetSetting("General", "force_Start").Contains("true") ? true : false;
-                this.patch_url = this.oSettings.GetSetting("General", "patch_url");
-                GameLauncher.newsWebbrowser.Navigate(this.oSettings.GetSetting("General", "news_url"));
+                oSettings.Load(iniData);
+                patch_url = oSettings.GetSetting("General", "patch_url");
+                GameLauncher.newsWebbrowser.Navigate(oSettings.GetSetting("General", "news_url"));
 
-                this.client_path = this.oSettings.GetSetting("Client", "client_path");
-                this.client_parameters = this.oSettings.GetSetting("Client", "client_parameters");
+                client_path = oSettings.GetSetting("Client", "client_path");
+                client_parameters = oSettings.GetSetting("Client", "client_parameters");
 
-                this.patch_count = Int32.Parse(this.oSettings.GetSetting("Patches", "patchcount"));
-                this.local_patch_list_path = this.oSettings.GetSetting("Patches", "local_list");
-
-                this.launcherLastVer = this.oSettings.GetSetting("LaucherVersion", "launcher_ver");
-                this.launcherLocalVerFile = this.oSettings.GetSetting("LaucherVersion", "local_ver");
-                this.launcherFile = this.oSettings.GetSetting("LaucherVersion", "patch");
+                patch_count = Int32.Parse(oSettings.GetSetting("Patches", "patchcount"));
+                local_patch_list_path = oSettings.GetSetting("Patches", "local_list");
 
                 return true;
             }
             catch (Exception ex)
             {
-                this.setStatusText(ex.Message);
+                setStatusText(ex.Message);
+                return false;
+            }
+        }
+
+        private bool loadIniDataLauncherUpdate(String iniData)
+        {
+            try
+            {
+                oSettingsLauncherUpdate.Load(iniData);
+                patch_url = oSettingsLauncherUpdate.GetSetting("General", "patch_url");
+                launcherLastVer = oSettingsLauncherUpdate.GetSetting("LaucherVersion", "launcher_ver");
+                launcherFile = oSettingsLauncherUpdate.GetSetting("LaucherVersion", "patch");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                setStatusText(ex.Message);
                 return false;
             }
         }
@@ -142,15 +189,15 @@ namespace GameLauncher
         {
             try
             {
-                String path_list = AppDomain.CurrentDomain.SetupInformation.ApplicationBase + this.local_patch_list_path;
+                String path_list = AppDomain.CurrentDomain.SetupInformation.ApplicationBase + local_patch_list_path;
                 string directoryName = Path.GetDirectoryName(path_list);
                 if ((directoryName.Length > 0) && (!Directory.Exists(directoryName)))
                 {
                     Directory.CreateDirectory(directoryName);
                 }
-                using (this.local_patch_list_stream = new FileStream(path_list, FileMode.OpenOrCreate))
+                using (local_patch_list_stream = new FileStream(path_list, FileMode.OpenOrCreate))
                 {
-                    using (StreamReader sr = new StreamReader(this.local_patch_list_stream))
+                    using (StreamReader sr = new StreamReader(local_patch_list_stream))
                     {
                         while (!sr.EndOfStream)
                         {
@@ -159,12 +206,12 @@ namespace GameLauncher
                     }
                 }
 
-                for (int i = 1; i <= this.patch_count; i++)
+                for (int i = 1; i <= patch_count; i++)
                 {
-                    this.patch = this.oSettings.GetSetting("Patches", "patch" + i.ToString());
+                    patch = oSettings.GetSetting("Patches", "patch" + i.ToString());
                     if (!local_patch_list.Contains(patch) && !reversedPatchListStack.Contains(patch))
                     {
-                        this.patch_list.Push(patch);
+                        patch_list.Push(patch);
                     }
                 }
 
@@ -174,44 +221,39 @@ namespace GameLauncher
                 return true;
             } catch(Exception ex)
             {
-                this.setStatusText(ex.Message);
+                setStatusText(ex.Message);
                 return false;
             }
         }
-
-        private Stopwatch sw = new Stopwatch();
-
-        private WebClient clientPatches = new WebClient();
-        private String currentDownload;
         private void pushStackAndReverse(string patch)
         {
             // Initiate new Stack using previous Stack data
-            this.reversedPatchListStack = new Stack<string>(this.patch_list);
+            reversedPatchListStack = new Stack<string>(patch_list);
         }
         private void startDownloadingPatches()
         {
             clientPatches.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
             clientPatches.DownloadDataCompleted += new DownloadDataCompletedEventHandler(client_DownloadDataCompleted);
-            this.currentDownload = patch_url + reversedPatchListStack.Pop();
-            this.sw.Start();
-            clientPatches.DownloadDataAsync(new Uri(this.currentDownload));
+            currentDownload = patch_url + reversedPatchListStack.Pop();
+            sw.Start();
+            clientPatches.DownloadDataAsync(new Uri(currentDownload));
         }
 
         private async Task startDownloadingLauncher()
         {
-            clientPatches.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
-            clientPatches.DownloadDataCompleted += new DownloadDataCompletedEventHandler(client_DownloadDataCompleted);
-            this.currentDownload = patch_url + launcherFile;
-            this.sw.Start();
+            launcherPatches.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
+            launcherPatches.DownloadDataCompleted += new DownloadDataCompletedEventHandler(client_DownloadDataCompleted);
+            //currentDownload = "http://sarasa.com.ar/" + launcherFile;
+            currentDownload = patch_url + launcherFile;
+            sw.Start();
 
-            Task.Run(() => { clientPatches.DownloadDataAsync(new Uri(this.currentDownload)); } );
-
+            await Task.Run(() => { launcherPatches.DownloadDataAsync(new Uri(currentDownload)); } );
         }
 
         private void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
             // Calculate download speed
-            String downloadSpeed = Patcher.BytesToString(e.BytesReceived / this.sw.Elapsed.TotalSeconds);
+            String downloadSpeed = Patcher.BytesToString(e.BytesReceived / sw.Elapsed.TotalSeconds);
 
             // Show the percentage on our label.
             int percentage = e.ProgressPercentage;
@@ -219,18 +261,18 @@ namespace GameLauncher
             // Update the label with how much data have been downloaded so far and the total size of the file we are currently downloading
             String totalReceived = string.Format("{0} MB / {1} MB", (e.BytesReceived / 1024d / 1024d).ToString("0.00"), (e.TotalBytesToReceive / 1024d / 1024d).ToString("0.00"));
 
-            this.setStatusText(string.Format("{0} Downloading: {1} {2} ", this.currentFileProcessing(), Path.GetFileNameWithoutExtension(this.currentDownload), totalReceived), downloadSpeed);
-            this.setProgressbar(percentage);
+            setStatusText(string.Format("{0} Downloading: {1} {2} ", currentFileProcessing(), Path.GetFileNameWithoutExtension(currentDownload), totalReceived), downloadSpeed);
+            setProgressbar(percentage);
         }
 
         private String currentFileProcessing()
         {
-            return "["+ (String)(this.totalPatches - this.reversedPatchListStack.Count).ToString()+"/"+this.totalPatches.ToString()+"]";
+            return "["+ (String)(totalPatches - reversedPatchListStack.Count).ToString()+"/"+totalPatches.ToString()+"]";
         }
 
         private static String BytesToString(double byteCount)
         {
-            string[] suf = { "B/s", "KB/s", "MB/s", "GB/s" }; //Longs run out around EB
+            string[] suf = { "B/s", "KB/s", "MB/s", "GB/s" };
             if (byteCount == 0)
                 return "0" + suf[0];
             long bytes = Math.Abs((long)byteCount);
@@ -241,13 +283,13 @@ namespace GameLauncher
         private void client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
             // Reset the stopwatch.
-            this.sw.Reset();
+            sw.Reset();
             if (!e.Cancelled && e.Error == null)
             {
-                this.extractDownload(e.Result);
+                extractDownload(e.Result);
             } else
             {
-                this.setStatusText(e.Error.Message);
+                setStatusText(e.Error.Message);
             }
         }
 
@@ -257,8 +299,8 @@ namespace GameLauncher
         {
             if (e.EventType == ZipProgressEventType.Extracting_BeforeExtractEntry)
             {
-                this.setStatusText(String.Format("{0} Extracting: {1}", this.currentFileProcessing(), e.CurrentEntry.FileName));
-                this.setProgressbar(percentComplete);
+                setStatusText(String.Format("{0} Extracting: {1}", currentFileProcessing(), e.CurrentEntry.FileName));
+                setProgressbar(percentComplete);
             }
         }
 
@@ -275,20 +317,20 @@ namespace GameLauncher
 
                         int step = 0;
                         int totalFiles = zip.Count;
-                        this.percentComplete = 0;
+                        percentComplete = 0;
                         foreach (ZipEntry file in zip)
                         {
                             step++;
                             file.Extract(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, ExtractExistingFileAction.OverwriteSilently);
 
-                            this.percentComplete = (int)Math.Round((double)(100 * step) / totalFiles);
+                            percentComplete = (int)Math.Round((double)(100 * step) / totalFiles);
                         }
-                        this.addToPatchList(Path.GetFileName(this.currentDownload));
+                        addToPatchList(Path.GetFileName(currentDownload));
                         if (reversedPatchListStack.Count > 0)
                         {
-                            this.currentDownload = patch_url + reversedPatchListStack.Pop();
-                            this.sw.Start();
-                            clientPatches.DownloadDataAsync(new Uri(this.currentDownload));
+                            currentDownload = patch_url + reversedPatchListStack.Pop();
+                            sw.Start();
+                            clientPatches.DownloadDataAsync(new Uri(currentDownload));
                         }
                         else
                             this.patchesCompleted("Game succesfully updated. You may now start the game.");
@@ -296,7 +338,7 @@ namespace GameLauncher
                 }
                 catch (Exception ex)
                 {
-                    this.setStatusText(ex.Message);
+                    setStatusText(ex.Message);
                 }
             }).Start();
         }
@@ -305,15 +347,15 @@ namespace GameLauncher
         {
             try
             {
-                String path_list = AppDomain.CurrentDomain.SetupInformation.ApplicationBase + this.local_patch_list_path;
+                String path_list = AppDomain.CurrentDomain.SetupInformation.ApplicationBase + local_patch_list_path;
                 string directoryName = Path.GetDirectoryName(path_list);
                 if ((directoryName.Length > 0) && (!Directory.Exists(directoryName)))
                 {
                     Directory.CreateDirectory(directoryName);
                 }
-                using (this.local_patch_list_stream = new FileStream(path_list, FileMode.Append))
+                using (local_patch_list_stream = new FileStream(path_list, FileMode.Append))
                 {
-                    using (StreamWriter sr = new StreamWriter(this.local_patch_list_stream))
+                    using (StreamWriter sr = new StreamWriter(local_patch_list_stream))
                     {
                         sr.WriteLine(patch_added);
                     }
@@ -321,7 +363,7 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                this.setStatusText(ex.Message);
+                setStatusText(ex.Message);
             }
         }
         public void setStatusText(String text)
