@@ -2,13 +2,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GameLauncher
@@ -21,6 +20,10 @@ namespace GameLauncher
 
         private bool force_start = false;
         private String patch_url;
+
+        private String launcherLocalVerFile;
+        private String launcherLastVer;
+        private String launcherFile;
 
         private String client_path;
         private String client_parameters;
@@ -50,13 +53,38 @@ namespace GameLauncher
             clientPatchlist.DownloadDataAsync(new Uri("http://sarasa.com.ar/main.ini"));
         }
 
-        private void client_DownloadSettingsCompleted(object sender, DownloadDataCompletedEventArgs e)
+        private async void client_DownloadSettingsCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
             if (!e.Cancelled && e.Error == null)
             {
-                if(this.loadIniData(System.Text.Encoding.UTF8.GetString(e.Result)) && this.checkPatchlist())
+                if (this.loadIniData(System.Text.Encoding.UTF8.GetString(e.Result)) && this.checkPatchlist())
                 {
-                    if(this.reversedPatchListStack.Count > 0)
+                    string fileContents = File.ReadAllText(launcherLocalVerFile);
+
+                    // Compare the file contents to a string
+                    string comparisonString = launcherLastVer;
+                    bool isEqual = fileContents.Equals(comparisonString);
+
+                    if (!isEqual)
+                    {
+                        FileInfo file = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                        File.Move(file.FullName, file.DirectoryName + "\\" + file.Name.Replace(file.Extension, ".DELETE"));
+
+                        await this.startDownloadingLauncher();
+
+                        string assemblyPath = Assembly.GetEntryAssembly().Location;
+
+                        // Sleep thread to allow for file unzip
+                        WaitForm waitForm = new WaitForm();
+                        waitForm.Show();
+                        waitForm.Update();
+                        Thread.Sleep(5000);
+
+                        Process.Start(assemblyPath);
+                        Environment.Exit(0);
+                    }
+                    
+                    if (this.reversedPatchListStack.Count > 0)
                     {
                         this.startDownloadingPatches();
                     }
@@ -90,10 +118,17 @@ namespace GameLauncher
                 this.force_start = this.oSettings.GetSetting("General", "force_Start").Contains("true") ? true : false;
                 this.patch_url = this.oSettings.GetSetting("General", "patch_url");
                 GameLauncher.newsWebbrowser.Navigate(this.oSettings.GetSetting("General", "news_url"));
+
                 this.client_path = this.oSettings.GetSetting("Client", "client_path");
                 this.client_parameters = this.oSettings.GetSetting("Client", "client_parameters");
+
                 this.patch_count = Int32.Parse(this.oSettings.GetSetting("Patches", "patchcount"));
                 this.local_patch_list_path = this.oSettings.GetSetting("Patches", "local_list");
+
+                this.launcherLastVer = this.oSettings.GetSetting("LaucherVersion", "launcher_ver");
+                this.launcherLocalVerFile = this.oSettings.GetSetting("LaucherVersion", "local_ver");
+                this.launcherFile = this.oSettings.GetSetting("LaucherVersion", "patch");
+
                 return true;
             }
             catch (Exception ex)
@@ -160,6 +195,17 @@ namespace GameLauncher
             this.currentDownload = patch_url + reversedPatchListStack.Pop();
             this.sw.Start();
             clientPatches.DownloadDataAsync(new Uri(this.currentDownload));
+        }
+
+        private async Task startDownloadingLauncher()
+        {
+            clientPatches.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
+            clientPatches.DownloadDataCompleted += new DownloadDataCompletedEventHandler(client_DownloadDataCompleted);
+            this.currentDownload = patch_url + launcherFile;
+            this.sw.Start();
+
+            Task.Run(() => { clientPatches.DownloadDataAsync(new Uri(this.currentDownload)); } );
+
         }
 
         private void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)

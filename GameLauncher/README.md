@@ -23,4 +23,9 @@ client_parameters=127.0.0.1 1000
 local_list=client/patchlist.dat
 patchcount=1
 patch1=Data.zip
+
+[LaucherVersion]
+local_ver=launcher.dat
+launcher_ver=1.0.0.6
+patch=Launcher.zip
 ```

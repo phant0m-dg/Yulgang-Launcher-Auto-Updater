@@ -831,7 +831,9 @@ namespace GameLauncher
                     }
 
                 }
-            return Win32.CallWindowProc(m_layeredWindowProc, hWnd, Msg, wParam, lParam);
+            // Unsure why return 1 fixes this...
+            return 1;
+            //return Win32.CallWindowProc(m_layeredWindowProc, hWnd, Msg, wParam, lParam);
         }
 
         private Bitmap m_background;

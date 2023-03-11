@@ -2,14 +2,36 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace GameLauncher
 {
 	public partial class frmLauncher : AlphaForm
 	{
-		public frmLauncher()
+        public frmLauncher()
 		{
-			InitializeComponent();
+            // Get the directory containing the currently executing assembly
+            string assemblyPath = Assembly.GetExecutingAssembly().Location;
+            string assemblyDirectory = Path.GetDirectoryName(assemblyPath);
+
+            // Search for files with the ".DELETE" extension in the assembly directory
+            string[] deleteFiles = Directory.GetFiles(assemblyDirectory, "*.DELETE");
+
+            // Delete the found files
+            foreach (string file in deleteFiles)
+            {
+                File.Delete(file);
+            }
+
+            if (!File.Exists("launcher.dat"))
+            {
+                using (FileStream fs = File.Create("launcher.dat"));
+            }
+
+            InitializeComponent();
 		}
 
         private Image m_closeBtnOff;
