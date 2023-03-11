@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -29,6 +30,7 @@ namespace GameLauncher
 
         private Stack<String> patch_list = new Stack<String>();
         private Stack<String> reversedPatchListStack = new Stack<String>();
+        private String patch;
 
         private int patch_count = 0;
         private ArrayList local_patch_list = new ArrayList();
@@ -124,12 +126,15 @@ namespace GameLauncher
 
                 for (int i = 1; i <= this.patch_count; i++)
                 {
-                    String patch = this.oSettings.GetSetting("Patches", "patch" + i.ToString());
+                    this.patch = this.oSettings.GetSetting("Patches", "patch" + i.ToString());
                     if (!local_patch_list.Contains(patch) && !reversedPatchListStack.Contains(patch))
                     {
-                        pushStackAndReverse(patch);
+                        this.patch_list.Push(patch);
                     }
                 }
+
+                pushStackAndReverse(patch);
+
                 totalPatches = reversedPatchListStack.Count;
                 return true;
             } catch(Exception ex)
@@ -145,9 +150,6 @@ namespace GameLauncher
         private String currentDownload;
         private void pushStackAndReverse(string patch)
         {
-            // Push new item to Stack
-            this.patch_list.Push(patch);
-
             // Initiate new Stack using previous Stack data
             this.reversedPatchListStack = new Stack<string>(this.patch_list);
         }
