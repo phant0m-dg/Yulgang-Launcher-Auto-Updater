@@ -1,2 +1,9 @@
 
 GameLauncher/bin/Debug/client
+*.pdb
+*.exe
+*.cache
+*.JPG
+*.vsidx
+*.lock
+.vs/GameLauncher/v17/.suo

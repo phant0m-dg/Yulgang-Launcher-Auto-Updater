@@ -28,6 +28,8 @@ namespace GameLauncher
         private FileStream local_patch_list_stream;
 
         private Stack<String> patch_list = new Stack<String>();
+        private Stack<String> reversedPatchListStack = new Stack<String>();
+
         private int patch_count = 0;
         private ArrayList local_patch_list = new ArrayList();
 
@@ -52,7 +54,7 @@ namespace GameLauncher
             {
                 if(this.loadIniData(System.Text.Encoding.UTF8.GetString(e.Result)) && this.checkPatchlist())
                 {
-                    if(this.patch_list.Count > 0)
+                    if(this.reversedPatchListStack.Count > 0)
                     {
                         this.startDownloadingPatches();
                     }
@@ -123,12 +125,12 @@ namespace GameLauncher
                 for (int i = 1; i <= this.patch_count; i++)
                 {
                     String patch = this.oSettings.GetSetting("Patches", "patch" + i.ToString());
-                    if (!local_patch_list.Contains(patch) && !patch_list.Contains(patch))
+                    if (!local_patch_list.Contains(patch) && !reversedPatchListStack.Contains(patch))
                     {
-                        this.patch_list.Push(patch);
+                        pushStackAndReverse(patch);
                     }
                 }
-                totalPatches = patch_list.Count;
+                totalPatches = reversedPatchListStack.Count;
                 return true;
             } catch(Exception ex)
             {
@@ -141,11 +143,19 @@ namespace GameLauncher
 
         private WebClient clientPatches = new WebClient();
         private String currentDownload;
+        private void pushStackAndReverse(string patch)
+        {
+            // Push new item to Stack
+            this.patch_list.Push(patch);
+
+            // Initiate new Stack using previous Stack data
+            this.reversedPatchListStack = new Stack<string>(this.patch_list);
+        }
         private void startDownloadingPatches()
         {
             clientPatches.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
             clientPatches.DownloadDataCompleted += new DownloadDataCompletedEventHandler(client_DownloadDataCompleted);
-            this.currentDownload = patch_url + patch_list.Pop();
+            this.currentDownload = patch_url + reversedPatchListStack.Pop();
             this.sw.Start();
             clientPatches.DownloadDataAsync(new Uri(this.currentDownload));
         }
@@ -167,7 +177,7 @@ namespace GameLauncher
 
         private String currentFileProcessing()
         {
-            return "["+ (String)(this.totalPatches - this.patch_list.Count).ToString()+"/"+this.totalPatches.ToString()+"]";
+            return "["+ (String)(this.totalPatches - this.reversedPatchListStack.Count).ToString()+"/"+this.totalPatches.ToString()+"]";
         }
 
         private static String BytesToString(double byteCount)
@@ -226,9 +236,9 @@ namespace GameLauncher
                             this.percentComplete = (int)Math.Round((double)(100 * step) / totalFiles);
                         }
                         this.addToPatchList(Path.GetFileName(this.currentDownload));
-                        if (patch_list.Count > 0)
+                        if (reversedPatchListStack.Count > 0)
                         {
-                            this.currentDownload = patch_url + patch_list.Pop();
+                            this.currentDownload = patch_url + reversedPatchListStack.Pop();
                             this.sw.Start();
                             clientPatches.DownloadDataAsync(new Uri(this.currentDownload));
                         }
@@ -253,7 +263,7 @@ namespace GameLauncher
                 {
                     Directory.CreateDirectory(directoryName);
                 }
-                using (this.local_patch_list_stream = new FileStream(path_list, FileMode.OpenOrCreate))
+                using (this.local_patch_list_stream = new FileStream(path_list, FileMode.Append))
                 {
                     using (StreamWriter sr = new StreamWriter(this.local_patch_list_stream))
                     {
